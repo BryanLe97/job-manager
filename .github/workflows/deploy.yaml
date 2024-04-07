@@ -17,8 +17,10 @@ jobs:
       - name: Update apt
         run: sudo apt update
 
-      - name: Setup Node
-        run: sudo apt install nodejs
+      - name:  Setup Node.js 20
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
 
       - name: Setup npm
         run: sudo apt install npm
