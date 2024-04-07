@@ -1,15 +1,19 @@
 import { defineStore } from 'pinia';
+import jobsArray from './jobsArray';
 
-export interface Job {
-    id: number;
+export interface JobCreate {
     title: string;
     description: string;
+    deadline: string;
+}
+export interface Job extends JobCreate{
+    id: number;
     status: number;
     created_at: Date;
-    deadline: Date;
 }
 
 export const status = {
+    'all': -1,
     'done': 0,
     'notDone': 1
 }
@@ -24,6 +28,7 @@ export const useJobsStore = defineStore({
     state: () => ({
         jobs: [] as Job[],
         isLoading: false as boolean,
+        job: {} as JobCreate
     }),
     actions: {
         async fetchJobs({ keyword, status, by }: { keyword: string; status: number; by: number }) {
@@ -31,7 +36,7 @@ export const useJobsStore = defineStore({
             try {
                 const response = await fetch(`${import.meta.env.VITE_API_URL}/items?keyword=${keyword}&status=${status}&by=${by}`);
                 const jobs = await response.json();
-                this.jobs = jobs;
+                this.jobs = jobs.concat(jobsArray.jobs)
             } finally {
                 this.isLoading = false;
             }
@@ -41,16 +46,15 @@ export const useJobsStore = defineStore({
             try {
                 this.isLoading = true;
                 const response = await fetch(`${import.meta.env.VITE_API_URL}/items/${id}`);
-                const job = await response.json();
-                return job;
+                this.job = await response.json();
             } finally {
                 this.isLoading = false;
             }
         },
-        async createNewJob(job: Job) {
+        async createNewJob(job: JobCreate) {
             try {
                 this.isLoading = true;
-                const response = await fetch('/api/jobs', {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/items`, {
                     method: 'POST',
                     body: JSON.stringify(job),
                     headers: {
@@ -64,7 +68,7 @@ export const useJobsStore = defineStore({
             }
             
         },
-        async updateJobById(id: number, updatedJob: Job) {
+        async updateJobById(id: number, updatedJob: JobCreate) {
             try {
                 this.isLoading = true;
                 const response = await fetch(`${import.meta.env.VITE_API_URL}/items/${id}`, {
@@ -84,5 +88,15 @@ export const useJobsStore = defineStore({
             }
             
         },
+        async deleteJobById(id: number) {
+            try {
+                this.isLoading = true;
+                this.isLoading = false;
+                await fetch(`${import.meta.env.VITE_API_URL}/items/${id}`, {
+                    method: 'DELETE',
+                });
+            } finally {
+            }
+        }
     },
 });

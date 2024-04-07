@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useJobsStore, Job, status, by } from '@/stores/jobs'
+import { router } from '@/router'
 
 const jobsStore = useJobsStore()
 const jobs = ref<Job[]>([])
 const perPage = 6
 const currentPage = ref(1)
-const parmas = {
+const params = {
 	by: by.created,
 	keyword: '',
-	status: status.done,
+	status: status.all,
 }
 
 const totalPages = computed(() => Math.ceil(jobs.value.length / perPage))
@@ -52,21 +53,39 @@ const goToPage = (page: number) => {
 
 const fetchList = async () => {
 	try {
-		await jobsStore.fetchJobs(parmas)
-		jobs.value = jobsStore.jobs
-		jobs.value = jobsStore.jobs.concat(
-			jobsStore.jobs,
-			jobsStore.jobs,
-			jobsStore.jobs,
-			jobsStore.jobs,
-			jobsStore.jobs,
-			jobsStore.jobs,
-			jobsStore.jobs,
-			jobsStore.jobs,
-			jobsStore.jobs
-		)
+		const response = ref<Job[]>([])
+		await jobsStore.fetchJobs(params)
+		if (params.keyword.length > 0) {
+			response.value = jobsStore.jobs.filter((job: Job) => {
+				job.title.includes(params.keyword)
+			})
+		} else if (params.status != -1) {
+			response.value = jobsStore.jobs.filter(
+				(job: Job) => job.status == params.status
+			)
+		} else {
+			response.value = jobsStore.jobs
+		}
+		jobs.value = response.value.sort((a: Job, b: Job) => {
+			if (params.by == 1) {
+				return (
+					new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+				)
+			} else {
+				return new Date(b.deadline).getTime() - new Date(a.deadline).getTime()
+			}
+		})
 	} catch (error) {
 		console.error('Failed to fetch jobs:', error)
+	}
+}
+
+const handleDelete = (id: number, index: number) => {
+	try {
+		jobsStore.deleteJobById(id)
+		jobs.value.splice(index, 1)
+	} catch (error) {
+		console.error('Failed to delete job:', error)
 	}
 }
 </script>
@@ -80,24 +99,30 @@ const fetchList = async () => {
 					class="mr-8"
 					type="text"
 					placeholder="Tìm Kiếm"
-					v-model="parmas.keyword"
+					v-model="params.keyword"
 					@change="fetchList"
 				/>
-				<select class="mr-8" v-model="parmas.status" @change="fetchList">
+				<select class="mr-8" v-model="params.status" @change="fetchList">
+					<option value="-1">All</option>
 					<option value="0">Chưa Hoàn Thành</option>
 					<option value="1">Hoàn Thành</option>
 				</select>
-				<select v-model="parmas.by" @change="fetchList">
+				<select v-model="params.by" @change="fetchList">
 					<option value="0">Sort by Created</option>
 					<option value="1">Sort by Deadline</option>
 				</select>
 			</div>
-			<button class="list-jobs__filter-button">+ Thêm mới</button>
+			<button
+				class="list-jobs__filter-button"
+				@click="router.push({ name: 'Create' })"
+			>
+				+ Thêm mới
+			</button>
 		</div>
 		<div class="list-jobs__table">
 			<div
 				class="list-jobs__table-content"
-				v-for="job in paginatedJobs"
+				v-for="(job, jobIndex) in paginatedJobs"
 				:key="job.id"
 			>
 				<div class="list-jobs__table-content-item">
@@ -106,8 +131,18 @@ const fetchList = async () => {
 					>
 						<p>{{ job.title }}</p>
 						<div class="list-jobs__table-content-item-title--underline d-flex">
-							<div class="mr-8">Sửa</div>
-							<div class="list-jobs__table-content-item-title--red">Xoá</div>
+							<div
+								class="mr-8"
+								@click="router.push({ name: 'Update', params: { id: job.id } })"
+							>
+								Sửa
+							</div>
+							<div
+								class="list-jobs__table-content-item-title--red"
+								@click="handleDelete(job.id, jobIndex)"
+							>
+								Xoá
+							</div>
 						</div>
 					</div>
 					<div class="list-jobs__table-content-item-description">
@@ -208,7 +243,7 @@ const fetchList = async () => {
 			}
 		}
 	}
-	@media (max-width: 560px) {
+	@media (max-width: 585px) {
 		.list-jobs {
 			&__filter {
 				display: flex !important;
@@ -219,6 +254,10 @@ const fetchList = async () => {
 				display: grid;
 				grid-template-columns: repeat(2, 1fr);
 				grid-gap: 10px;
+			}
+			&__filter-button {
+				margin-top: 0px;
+				padding: 18px;
 			}
 		}
 	}

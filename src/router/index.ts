@@ -2,6 +2,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '@/views/Login.vue'
 import List from '@/views/jobs-manager/List.vue'
+import Detail from '@/views/jobs-manager/component/Detail.vue'
+
 
 const routes = [
     {
@@ -13,19 +15,17 @@ const routes = [
         path: '/list',
         name: 'List',
         component: List,
-        children: [
-            {
-                path: '/create',
-                name: 'Create',
-                redirect: '/list'
-            },
-            {
-                path: '/update/:id',
-                name: 'Update',
-                redirect: '/list'
-            }
-        ]
     },
+    {
+        path: '/Create',
+        name: 'Create',
+        component: Detail
+    },
+    {
+        path: '/update/:id',
+        name: 'Update',
+        component: Detail
+    }
 ]
 
 export const  router = createRouter({
