@@ -7,17 +7,20 @@ on:
       
 jobs:
   build:
+  
     name: Build
     runs-on: ubuntu-latest
-
     steps:
+      - name: Check Git version
+        run: git --version
+
       - name: Checkout repo
         uses: actions/checkout@v3
       
       - name: Update apt
         run: sudo apt update
 
-      - name:  Setup Node.js 20
+      - name: Setup Node.js 20
         uses: actions/setup-node@v3
         with:
           node-version: 20
