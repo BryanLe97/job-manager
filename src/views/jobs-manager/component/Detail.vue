@@ -3,11 +3,13 @@ import { ref, onMounted } from 'vue'
 import { useJobsStore } from '@/stores/jobs'
 import { useRoute } from 'vue-router'
 
-const createForm = ref({
+const initCreateForm = {
 	title: '',
 	description: '',
 	deadline: '',
-})
+}
+
+const createForm = ref({ ...initCreateForm })
 
 const route = useRoute()
 const id = +route.params.id
@@ -16,14 +18,21 @@ const jobsStore = useJobsStore()
 onMounted(async () => {
 	if (!id) return
 	await jobsStore.getJobDetail(id)
-	createForm.value = jobsStore.job
+	createForm.value = jobsStore.jobs.filter((job) => job.id === id)[0]
 })
 
-const handleSubmit = () => {
-	if (!id) {
-		jobsStore.createNewJob(createForm.value)
-	} else {
-		jobsStore.updateJobById(id, createForm.value)
+const handleSubmit = async () => {
+	try {
+		if (!id) {
+			await jobsStore.createNewJob(createForm.value)
+		} else {
+			await jobsStore.updateJobById(id, createForm.value)
+		}
+	} catch (error) {
+		alert('Có lỗi xảy ra')
+	} finally {
+		if (!id) createForm.value = initCreateForm
+		alert(`${id ? 'Lưu' : 'Thêm'} công việc mới thành công`)
 	}
 }
 </script>

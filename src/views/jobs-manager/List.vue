@@ -56,9 +56,9 @@ const fetchList = async () => {
 		const response = ref<Job[]>([])
 		await jobsStore.fetchJobs(params)
 		if (params.keyword.length > 0) {
-			response.value = jobsStore.jobs.filter((job: Job) => {
+			response.value = jobsStore.jobs.filter((job: Job) =>
 				job.title.includes(params.keyword)
-			})
+			)
 		} else if (params.status != -1) {
 			response.value = jobsStore.jobs.filter(
 				(job: Job) => job.status == params.status
